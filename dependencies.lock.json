@@ -3,7 +3,7 @@
   "dependencies": {
     "gateway-core": {
       "environment": "ZOMBIE_CORE_DIR",
-      "commit": "f0019e7506fa15738a67880b584e5d09592a6325",
+      "commit": "cc87eddca7378b1bbbf746ae7434d6e23b1cf2e6",
       "remote": "https://github.com/ZombieBox-tv/zombiebox-gateway-core.git"
     }
   }
