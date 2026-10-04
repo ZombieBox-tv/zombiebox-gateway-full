@@ -85,7 +85,37 @@ No host Go, Python, Node, FFmpeg or audio daemon is needed for execution. The
 Python scripts above are maintainer checks, not end-user runtime dependencies.
 
 Place the official archive at `.local/soloist/provision/soloist.tar.gz` and the
-key file at `.local/soloist/provision/key` under `ZOMBIE_RUNTIME_ROOT`. The default
+key file at `.local/soloist/provision/key` under the selected installation's
+`ZOMBIE_RUNTIME_ROOT`, not under a hardcoded source checkout.
+
+The Docker installer's placement contract is:
+
+| Selection | Compose installation directory |
+| --- | --- |
+| Default | Directory where `install-docker.sh` is invoked |
+| `--directory PATH` | The explicitly selected directory |
+| `--user-data` | `${XDG_DATA_HOME:-$HOME/.local/share}/zombiebox/full/releases/<version>` |
+
+For this private source-Compose evaluation, use the selected QA installation
+directory as `ZOMBIE_RUNTIME_ROOT`. Provisioning input then resides at
+`<installation>/.local/soloist/provision/key` in either placement mode. Keep the
+same runtime root and Compose project on every initialization, start and control
+command; a different project selects different named volumes. Existing key,
+configuration and account state must not be moved automatically.
+
+```sh
+cd /path/to/the/selected/qa-compose-directory
+export ZOMBIE_RUNTIME_ROOT="$(pwd -P)"
+```
+
+The published standalone installer uses named configuration volumes and does not
+yet distribute this unreleased Soloist override. Its `--user-data` flag selects
+installation placement; it is not an argument to `docker compose`. Do not apply
+the source override to an older standalone bundle assuming its worker config
+mounts are compatible. `install.sh` is the separate source-development helper,
+with its own runtime-root defaults; it is not the public `install-docker.sh`.
+
+The default
 archive hash freezes the already recorded private 1.3.8.82 trial
 (`76e344ff47b571d9974ac7b85d0ab301ef01f2574d7ccbef01d4953635769a5b`).
 For a newer officially obtained archive, independently verify and record its
@@ -112,12 +142,17 @@ For a maintainer rebuild, refresh the pinned build contexts with `make sources`
 before `build` (the prior local context may contain an older go-librespot).
 For the frozen offline candidate, load the images and omit the build step.
 After the host gates pass, initialize and start only the selected services:
+Run these commands from the selected QA directory containing the source
+`compose.yaml` and `compose.soloist.yaml`, with the same `ZOMBIE_RUNTIME_ROOT`
+exported above. For a maintainer rebuild, also set `ZOMBIE_CORE_DIR` and
+`ZOMBIE_FULL_DIR` to the actual source checkouts; source locations do not select
+where credentials or QA data live.
 
 ```sh
-docker compose --env-file .local/gateway/compose.env \
+docker compose --env-file "$ZOMBIE_RUNTIME_ROOT/.local/gateway/compose.env" \
   -f compose.yaml -f compose.soloist.yaml --profile spotify --profile soloist \
   build gateway spotify soloist
-docker compose --env-file .local/gateway/compose.env \
+docker compose --env-file "$ZOMBIE_RUNTIME_ROOT/.local/gateway/compose.env" \
   -f compose.yaml -f compose.soloist.yaml --profile spotify --profile soloist \
   up -d soloist-init soloist spotify gateway
 ```
@@ -132,7 +167,7 @@ and run `scripts/check-soloist-container.py CONTAINER_ID`. Read bounded readines
 without putting a bearer or API key in command arguments:
 
 ```sh
-docker compose --env-file .local/gateway/compose.env \
+docker compose --env-file "$ZOMBIE_RUNTIME_ROOT/.local/gateway/compose.env" \
   -f compose.yaml -f compose.soloist.yaml --profile spotify --profile soloist \
   exec -T spotify zombie-worker -config /config/worker.json -healthcheck
 ```
