@@ -1,0 +1,95 @@
+# Opt-in ZB-006 evaluation override. Preserve the other current QA services.
+services:
+  gateway:
+    image: zombie-box-tv/gateway:0.1.0-zb006.2-qa
+  spotify:
+    image: zombie-box-tv/spotify:0.1.3-zb006.2-qa
+    environment:
+      ZOMBIE_SOLOIST_URL: http://127.0.0.1:8097
+    volumes:
+      - ${ZOMBIE_RUNTIME_ROOT:-.}/.local/spotify/worker.json:/config/worker.json:ro,z
+
+  soloist-init:
+    profiles: [soloist]
+    image: zombie-box-tv/soloist-runtime:0.1.0-zb006.2-qa
+    network_mode: none
+    user: "0:0"
+    entrypoint: [/bin/sh, -eu, -c]
+    environment:
+      ZOMBIE_SOLOIST_ARCHIVE_SHA256: ${ZOMBIE_SOLOIST_ARCHIVE_SHA256:-76e344ff47b571d9974ac7b85d0ab301ef01f2574d7ccbef01d4953635769a5b}
+    command:
+      - >-
+        test "$${#ZOMBIE_SOLOIST_ARCHIVE_SHA256}" = 64 &&
+        printf '%s  /provision/soloist.tar.gz\n' "$$ZOMBIE_SOLOIST_ARCHIVE_SHA256" | sha256sum -c - >/dev/null &&
+        tar -xzf /provision/soloist.tar.gz -C /runtime --no-same-owner --no-same-permissions &&
+        test -f /runtime/soloist && chmod 0555 /runtime/soloist &&
+        sha256sum /runtime/soloist | cut -d ' ' -f 1 > /runtime/soloist.sha256 &&
+        chmod 0444 /runtime/soloist.sha256 &&
+        test -f /provision/key && test -s /provision/key &&
+        test "$$(stat -c %a /provision/key)" = 600 &&
+        rm -f /secrets/soloist-api-key /config/worker.json &&
+        install -m 0400 /provision/key /secrets/soloist-api-key &&
+        install -m 0400 /provision/worker.json /config/worker.json &&
+        chown 65531:65531 /secrets/soloist-api-key /config/worker.json
+    volumes:
+      - ${ZOMBIE_RUNTIME_ROOT:-.}/.local/soloist/provision/soloist.tar.gz:/provision/soloist.tar.gz:ro,Z
+      - ${ZOMBIE_RUNTIME_ROOT:-.}/.local/soloist/provision/key:/provision/key:ro,Z
+      - ${ZOMBIE_RUNTIME_ROOT:-.}/.local/spotify/worker.json:/provision/worker.json:ro,z
+      - soloist-secret:/secrets
+      - soloist-config:/config
+      - soloist-binary:/runtime
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 8
+    mem_limit: 32m
+    restart: "no"
+
+  soloist:
+    profiles: [soloist]
+    image: zombie-box-tv/soloist-runtime:0.1.0-zb006.2-qa
+    build:
+      context: ${ZOMBIE_CORE_DIR:-../gateway-core}
+      dockerfile: wrappers/soloist-runtime/Dockerfile
+    platform: linux/amd64
+    user: "65531:65531"
+    # PID 1 is the Go supervisor; do not add init:true or pid:host/service.
+    depends_on:
+      soloist-init:
+        condition: service_completed_successfully
+    networks:
+      default:
+        interface_name: api0
+      soloist-lan:
+        interface_name: lan0
+        gw_priority: 1
+    ports: ["127.0.0.1:8097:8097"]
+    volumes:
+      - soloist-binary:/runtime:ro
+      - soloist-secret:/run/secrets:ro
+      - soloist-config:/config:ro
+      - soloist-state:/state
+    tmpfs: ["/tmp:size=134217728,uid=65531,gid=65531,mode=0700"]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    ulimits:
+      core: 0
+    mem_limit: 384m
+    cpus: 1.0
+    pids_limit: 48
+    restart: "on-failure:3"
+
+networks:
+  soloist-lan:
+    # Create an isolated LAN attachment on the explicitly chosen wired NIC.
+    # This permits Connect discovery without exposing the unauthenticated WS
+    # on the host loopback. Wi-Fi/macvlan support must be checked on the host.
+    external: true
+    name: ${ZOMBIE_SOLOIST_LAN_NETWORK:-zombiebox-soloist-lan}
+volumes:
+  soloist-secret:
+  soloist-config:
+  soloist-state:
+  soloist-binary:

@@ -669,3 +669,11 @@ The new source-built gateway can run `-diagnose-media` in an isolated container 
 check its local FFmpeg pipeline. This is opt-in and does not connect to any provider
 or certify a TV decoder. See the core's `docs/media-diagnostic.md`. Existing running
 containers are not upgraded by building a new image.
+
+## Optional Soloist evaluation
+
+The unreleased ZB-006 Full amd64 candidate has an isolated, opt-in Soloist fallback.
+See [runtime provisioning and gates](docs/soloist-runtime.md). Its image never
+includes Spotify's binary or a key. Docker execution, LAN discovery, real-account
+relay and audible TV playback are separate required checks; no public release
+or physical compatibility is claimed by this source checkpoint.

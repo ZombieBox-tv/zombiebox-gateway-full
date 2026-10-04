@@ -49,3 +49,13 @@ remote-smoke:
 .PHONY: bootstrap-image
 bootstrap-image:
 	bash scripts/build-bootstrap.sh
+
+.PHONY: soloist-config-check soloist-host-check soloist-runtime-check
+soloist-config-check:
+	ZOMBIE_RELAY_ADMIN_TOKEN=synthetic-test-token-012345678901234567890 docker compose -f compose.yaml -f compose.soloist.yaml --profile spotify --profile soloist config --quiet
+soloist-host-check:
+	python3 scripts/check-soloist-packaging.py
+	$(MAKE) soloist-config-check
+	$(MAKE) -C $(ZOMBIE_CORE_DIR) soloist-check
+soloist-runtime-check:
+	python3 scripts/check-soloist-runtime.py
