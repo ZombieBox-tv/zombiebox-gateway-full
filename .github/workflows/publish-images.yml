@@ -35,6 +35,7 @@ jobs:
         run: |
           version="${{ inputs.version }}"
           core_dir=$(python3 scripts/dependencies.py path gateway-core)
+          sed -i 's/python3=3.12.14-r0/python3=3.12.15-r0/' "$core_dir/wrappers/youtube-pot/Dockerfile"
           docker build -t "ghcr.io/zombiebox-tv/youtube-pot:$version" -f "$core_dir/wrappers/youtube-pot/Dockerfile" "$core_dir"
           docker push "ghcr.io/zombiebox-tv/youtube-pot:$version"
       - name: Build and push youtube image
