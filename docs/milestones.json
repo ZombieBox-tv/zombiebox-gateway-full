@@ -3,6 +3,7 @@
   "repository": "zombiebox-gateway-full",
   "productRegistry": "workspace:docs/milestones.json",
   "notes": [
+    "0.1.3-dev.4: Pin Core ede3c3b (v0.1.3-dev.4) with verified YouTube Auto/720p/1080p playback and live IPTV on Vizio API13. HLS remote publisher duration slack adjusted for natural stream EOF.",
     "0.1.3-dev.0 unreleased Spotify source candidate: Full pins Core eca448b1c2b97e7e72478656b0749173f11df841 and a new local Spotify image identity built from go-librespot v0.10.2 with GPL/MIT notices and the refusal-containment patch. The running QA worker remains on the prior image with account data preserved until a controlled retry. Published dev.52 remains frozen; Spotify Premium sound, YouTube, IPTV and AirPlay gates remain open.",
     "Unreleased: Source-only Full adds an opt-in private YouTube PO resolver profile and exact identity/route checks, while published release assets remain frozen. Host resolution found HD candidates; Vizio >360p selection and playback remain unverified. QA gateway/AirPlay worker dev.90 and signed Client dev.59 retain data. The author reported faster AirPlay audio startup and functional pause, but sender controls lag, timeline lacks sender offset, artwork association is uncertain and local track controls remain unsupported. Spotify Premium playback remains open. Source checks pass; no product gate closes.",
     "Dev.78: Pins Core dev.65 and reserves local gateway/YouTube image identities for validated HD quality and adaptive playback. Existing Spotify/AirPlay worker images and public releases remain frozen. Image build and Vizio audio/HD playback are separate evidence; Spotify AES key refusal is unresolved. No product milestone closes.",
@@ -120,6 +121,6 @@
       "remoteURL": "https://github.com/ZombieBox-tv/zombiebox-gateway-full/milestone/6"
     }
   ],
-  "developmentCheckpoint": "v0.1.3-dev.0",
+  "developmentCheckpoint": "v0.1.3-dev.4",
   "remote": "https://github.com/ZombieBox-tv/zombiebox-gateway-full"
 }
